@@ -1,0 +1,54 @@
+{
+	"name": "goldsrc-query-mcp",
+	"version": "1.0.0",
+	"description": "MCP server for querying GoldSrc game servers",
+	"type": "module",
+	"main": "dist/index.js",
+	"bin": {
+		"goldsrc-query-mcp": "dist/index.js"
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"start": "node dist/index.js",
+		"format": "biome format --write",
+		"lint": "biome lint --write",
+		"check": "biome check --write",
+		"check:ci": "biome check",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"prepublishOnly": "npm run check:ci && npm run build && npm test",
+		"prepare": "husky"
+	},
+	"keywords": [
+		"goldsrc",
+		"half-life",
+		"counter-strike",
+		"mcp",
+		"model-context-protocol",
+		"server-query"
+	],
+	"dependencies": {
+		"@modelcontextprotocol/server": "latest",
+		"goldsrc-query": "latest",
+		"zod": "latest"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "latest",
+		"@commitlint/cli": "latest",
+		"@commitlint/config-conventional": "latest",
+		"@types/node": "latest",
+		"husky": "latest",
+		"typescript": "latest",
+		"vitest": "latest"
+	},
+	"engines": {
+		"node": ">=20.12.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/omar-hindawi98/goldsrc-query-mcp"
+	},
+	"author": "Omar Hindawi",
+	"license": "MIT"
+}

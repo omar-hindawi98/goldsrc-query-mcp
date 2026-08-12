@@ -13,14 +13,22 @@ An MCP server that lets AI assistants query GoldSrc game servers (Half-Life, Cou
 | Tool | Description |
 | --- | --- |
 | `ping` | Round-trip latency in milliseconds |
-| `server_info` | Server name, map, player counts, VAC status, and more |
-| `players` | Current player list with names, scores, and time in-game |
-| `rules` | All server cvars |
-| `rcon` | Send an RCON command and return the response |
+| `get_server_info` | Server name, map, player counts, VAC status, and more |
+| `get_players` | Current player list with names, scores, and time in-game |
+| `get_rules` | All server cvars |
+| `get_all` | Server info, player list, and rules in one call |
+| `send_rcon` | Send a single RCON command and return the response |
+| `send_rcon_batch` | Send multiple RCON commands over a single authenticated connection |
 
 ---
 
 ## Installation
+
+```bash
+npx goldsrc-query-mcp
+```
+
+Or install globally:
 
 ```bash
 npm install -g goldsrc-query-mcp
@@ -40,18 +48,6 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 {
   "mcpServers": {
     "goldsrc": {
-      "command": "goldsrc-query-mcp"
-    }
-  }
-}
-```
-
-Or run directly without installing:
-
-```json
-{
-  "mcpServers": {
-    "goldsrc": {
       "command": "npx",
       "args": ["goldsrc-query-mcp"]
     }
@@ -65,6 +61,7 @@ Or run directly without installing:
 - "How many players are on the server at `cs.example.com`?"
 - "Show me all the cvars on my server."
 - "Run `sv_gravity 800` on my server at `192.168.1.10` with password `secret`."
+- "Kick all bots and change the map to de_dust2 on my server."
 
 ---
 
@@ -74,34 +71,43 @@ All tools accept `address` (required), `port` (default `27015`), and `timeout` (
 
 ### `ping`
 
-```
-address: "192.168.1.10"
-port: 27015
-```
-
 Returns the round-trip latency in milliseconds.
 
-### `server_info`
+### `get_server_info`
 
 Returns server metadata as JSON - name, map, player counts, VAC status, server type, environment, and optional EDF fields.
 
-### `players`
+### `get_players`
 
 Returns the player list as JSON - index, name, score, and duration (seconds in-game) per player.
 
-### `rules`
+### `get_rules`
 
 Returns all server cvars as JSON - total count and a list of `{ name, value }` pairs.
 
-### `rcon`
+### `get_all`
+
+Returns server info, player list, and rules in a single call. Use this instead of calling `get_server_info`, `get_players`, and `get_rules` separately.
+
+### `send_rcon`
 
 ```
-address: "192.168.1.10"
+address:  "192.168.1.10"
 password: "your_rcon_password"
-command: "status"
+command:  "status"
 ```
 
-Sends an RCON command over UDP using the GoldSrc RCON protocol and returns the server response.
+Sends a single RCON command and returns the server response.
+
+### `send_rcon_batch`
+
+```
+address:  "192.168.1.10"
+password: "your_rcon_password"
+commands: ["sv_gravity 800", "mp_friendlyfire 1", "changelevel de_dust2"]
+```
+
+Sends multiple RCON commands over a single authenticated connection. Returns an array of `{ command, response }` pairs. Use instead of `send_rcon` when running more than one command.
 
 ---
 

@@ -1,6 +1,11 @@
 import { Query } from "goldsrc-query";
 
-export async function withQuery<T>(host: string, p: number, t: number, fn: (q: Query) => Promise<T>): Promise<T> {
+export async function withQuery<T>(
+	host: string,
+	p: number,
+	t: number,
+	fn: (q: Query) => Promise<T>,
+): Promise<T> {
 	const q = new Query(host, p, t);
 	q.connect();
 	try {
@@ -20,7 +25,9 @@ export function error(err: unknown) {
 	return { content: [{ type: "text" as const, text: t }], isError: true };
 }
 
-export async function safely<T>(fn: () => Promise<T>): Promise<T | ReturnType<typeof error>> {
+export async function safely<T>(
+	fn: () => Promise<T>,
+): Promise<T | ReturnType<typeof error>> {
 	try {
 		return await fn();
 	} catch (err) {

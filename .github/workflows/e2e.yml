@@ -1,0 +1,64 @@
+name: E2E
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_call:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start cstrike
+        run: docker compose up -d cstrike
+
+      - name: Wait for HLDS to be ready
+        shell: bash
+        run: |
+          set -e
+
+          echo "Waiting for HLDS to start..."
+
+          for i in {1..60}; do
+            echo "Waiting... ${i}/60"
+
+            if docker compose logs cstrike 2>&1 | grep -q 'World triggered "Round_Start"'; then
+              echo "HLDS is ready!"
+              exit 0
+            fi
+
+            if ! docker compose ps --status running --quiet cstrike | grep -q .; then
+              echo "HLDS container stopped unexpectedly."
+              docker compose logs cstrike
+              exit 1
+            fi
+
+            sleep 2
+          done
+
+          echo "Timed out waiting for HLDS."
+          docker compose logs cstrike
+          exit 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Build MCP server
+        run: npm ci && npm run build
+
+      - name: Run e2e tests
+        run: npm run test:e2e
+
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Stop services
+        if: always()
+        run: docker compose down

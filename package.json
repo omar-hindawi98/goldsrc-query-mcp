@@ -50,5 +50,8 @@
 		"url": "https://github.com/omar-hindawi98/goldsrc-query-mcp"
 	},
 	"author": "Omar Hindawi",
-	"license": "MIT"
+	"license": "MIT",
+	"optionalDependencies": {
+		"@modelcontextprotocol/node": "^2.0.0"
+	}
 }

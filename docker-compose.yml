@@ -1,0 +1,26 @@
+services:
+  cstrike:
+    platform: linux/amd64
+    image: cajuclc/cstrike-docker:latest
+    restart: always
+    environment:
+      - PORT=27015
+      - MAP=de_dust2
+      - MAXPLAYERS=16
+      - SV_LAN=0
+      - CPU_MHZ=3000
+    ports:
+      - 27015:27015/udp
+      - 27015:27015
+    volumes:
+      - ./docker/server.cfg:/home/steam/cstrike/cstrike/server.cfg:ro
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - 11434:11434
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  ollama_data:

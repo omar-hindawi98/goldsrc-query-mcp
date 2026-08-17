@@ -7,42 +7,42 @@ on:
     branches: [main]
   workflow_call:
 
-env:
-  AGENT_MODEL_NAME: llama3.2:1b
-
 jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache Ollama model
-        uses: actions/cache@v4
-        with:
-          path: ~/.ollama
-          key: ollama-${{ env.AGENT_MODEL_NAME }}
+      - name: Start cstrike
+        run: docker compose up -d cstrike
 
-      - name: Start services
-        run: docker compose up -d cstrike ollama
-
-      - name: Pull Ollama model
-        run: docker compose exec ollama ollama pull ${{ env.AGENT_MODEL_NAME }}
-
-      - name: Wait for cstrike
+      - name: Wait for HLDS to be ready
+        shell: bash
         run: |
-          for i in $(seq 1 30); do
-            nc -z 127.0.0.1 27015 2>/dev/null && echo "cstrike ready." && break
-            [ "$i" -eq 30 ] && { docker compose logs cstrike; exit 1; }
+          set -e
+
+          echo "Waiting for HLDS to start..."
+
+          for i in {1..60}; do
+            echo "Waiting... ${i}/60"
+
+            if docker compose logs cstrike 2>&1 | grep -q 'World triggered "Round_Start"'; then
+              echo "HLDS is ready!"
+              exit 0
+            fi
+
+            if ! docker compose ps --status running --quiet cstrike | grep -q .; then
+              echo "HLDS container stopped unexpectedly."
+              docker compose logs cstrike
+              exit 1
+            fi
+
             sleep 2
           done
 
-      - name: Wait for Ollama
-        run: |
-          for i in $(seq 1 30); do
-            curl -sf http://127.0.0.1:11434/api/tags >/dev/null 2>&1 && echo "Ollama ready." && break
-            [ "$i" -eq 30 ] && { docker compose logs ollama; exit 1; }
-            sleep 2
-          done
+          echo "Timed out waiting for HLDS."
+          docker compose logs cstrike
+          exit 1
 
       - uses: actions/setup-node@v4
         with:
@@ -52,15 +52,8 @@ jobs:
       - name: Build MCP server
         run: npm ci && npm run build
 
-      - uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-
       - name: Run e2e tests
-        run: uv run pytest tests/e2e/ -v
-        env:
-          OLLAMA_BASE_URL: http://127.0.0.1:11434
-          AGENT_MODEL_NAME: ${{ env.AGENT_MODEL_NAME }}
+        run: npm run test:e2e
 
       - name: Dump logs on failure
         if: failure()
